@@ -1,0 +1,45 @@
+name: CI
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * *"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: update blocklist
+        id: update_host
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cur_date=$(TZ=UTC date +'%d %b %Y %H:%M')
+          cur_ver=$(TZ=UTC date +'%d%m%y%H')
+          curl https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/multi.txt > blocklist.txt
+          curl https://badmojr.github.io/1Hosts/Lite/adblock.txt >> blocklist.txt
+          curl https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt >> blocklist.txt
+          grep -v '^!' blocklist.txt | sort -u > cleaned.txt
+          blocklist_total=$(wc -l < cleaned.txt)
+          {
+            echo "! Title: hostsui"
+            echo "! Last modified: ${cur_date}"
+            echo "! Version: ${cur_ver}"
+            echo "! Expires: 1 days"
+            echo "! Blocked: ${blocklist_total}"
+            echo "!"
+            cat cleaned.txt
+          } > hosts.txt
+          rm cleaned.txt blocklist.txt
+          echo "cur_date=${cur_date}" >> $GITHUB_OUTPUT
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          skip_checkout: true
+          file_pattern: hosts.txt
+          commit_message: update at ${{ steps.update_host.outputs.cur_date }}

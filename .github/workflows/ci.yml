@@ -24,9 +24,8 @@ jobs:
           curl https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/multi.txt > blocklist.txt
           curl https://badmojr.github.io/1Hosts/Lite/adblock.txt >> blocklist.txt
           curl https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt >> blocklist.txt
-          sed 's/ *!.*$//' blocklist.txt | \
-          grep -v -E '^(#|!)' | \
-          grep -E '^(\|\||@@\|\||/.*?/|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$|[A-Za-z0-9.-]+\.[A-Za-z]{2,})' | \
+          grep -v -E '^(#|!)' blocklist.txt | \
+          grep -E '^(\|\||@@\|\||/.*?/|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$|[A-Za-z0-9-]+\.[A-Za-z]{2,})' | \
           sort -u > cleaned.txt
           blocklist_total=$(wc -l < cleaned.txt)
           {
